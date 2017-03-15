@@ -181,6 +181,7 @@
             SoftMesh_SetPointVelocity(Name, I, <0,0,0>)
             SoftMesh_SpreadVelocity(Name, I, Normal*ColliderBouncyness)
             SoftMesh_SpreadReduceVelocity(Name, I)
+            SoftMesh_SpreadTorque(Name, I, Normal)
             //TODO BOUNCE
         #end
     #end

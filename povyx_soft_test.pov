@@ -94,14 +94,14 @@ array[6]{
     };
     SoftMesh_CreateSoftMesh("mSoftMeshCollider", VertexList, TriangleList, 8, 36, <0,0,0>, 0)
     SoftMesh_MoveMeshUniformly("mSoftMeshCollider", <0,-13,0>)
-    SoftMesh_SetBouncyness("mSoftMeshCollider", 0) 
+    SoftMesh_SetBouncyness("mSoftMeshCollider", 1) 
     POVYX2_Init()
     POVYX2_AddSoftBody("mSoftMesh") 
-    POVYX2_AddSoftBody("mSoftMesh2")
+    //POVYX2_AddSoftBody("mSoftMesh2")
     POVYX2_AddConstantForce(<0,-9,0>)
     //POVYX2_AddCollider("mSoftMeshCollider")
     POVYX2_AddCollider("mSoftMesh1")
-    POVYX2_AddCollider("mSoftMesh")
+    //POVYX2_AddCollider("mSoftMesh")
     POVYX2_ResetCacheRead()
 #end             
 
@@ -110,7 +110,7 @@ array[6]{
 
 #if(1)
     SoftMesh_DrawDebugMesh("mSoftMesh")
-    SoftMesh_DrawDebugMesh("mSoftMesh2")
+    //SoftMesh_DrawDebugMesh("mSoftMesh2")
     //SoftMesh_DrawAsMesh("mSoftMesh") 
     SoftMesh_DrawAsMesh("mSoftMesh1")
     POVYX2_Update() 
@@ -129,7 +129,7 @@ light_source{ <0,10,-10> White }
 camera{ 
     right x*image_width / image_height
     up y
-    location <-3, 3, -10> 
+    location <0, 3, -10> 
     look_at < 0,-3,0 > 
     angle 80
 }

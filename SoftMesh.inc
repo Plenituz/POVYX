@@ -24,6 +24,10 @@
     setAttr(Name, "bouncyness", 0)//how much velocity is conserved when a rigidbody bounces against this surface
     setAttr(Name, "maxDistanceFromBase", 1)//kinda rigidity
     setAttr(Name, "multiplyAdjacentPointVelOnBounce", 0.8)//how good does the material transfert "contact wave" or "push wave" but inverted, the higher, the less wave are tranfered IE the material deforms a lot                                  
+    setAttr(Name, "torqueMultiplierOnBounce", 3)//can be higher than 1, this multiplies the torque applied on a bounce (who would have thought right ?)
+    setAttr(Name, "angularDrag", 0.01) 
+     
+    setAttr(Name, "torque", <0,0,0>)//torque, not a parameter
     
     #for(I, 0, VertexCount-1)
         DiskArray_Add(VertArrName, VertexArray[I])
@@ -41,7 +45,7 @@
         #local Offset = PointPos - Center;
         
         setAttr(VertVarName, "offsetFromOriginAtStart", Offset)
-        setAttr(VertVarName, "velocity", <0,0,0>) 
+        setAttr(VertVarName, "velocity", <0,0,0>)
     #end                                     
 #end 
 
@@ -105,6 +109,20 @@
         #local V = DiskArray_GetVect(VertArrName, I);
         #local V = vtransform(V, Rotate_Around_Trans(Rotation, Anchor));
         DiskArray_Set(VertArrName, I, V)
+    #end
+#end
+
+#macro SoftMesh_RotateOriginPoints(Name, Rotation)
+    #local VertArrName = concat(Name, ".vertex");
+    #local VertCount = DiskArray_GetCount(VertArrName);  
+    #local MeshCenter = SoftMesh_GetMeshCenter(Name);
+    
+    #for(I, 0, VertCount-1) 
+        #local VectVarName = DiskArray_GetVarName(VertArrName, I)
+        #local V = getVectAttr(VectVarName, "offsetFromOriginAtStart");
+        #local V = vtransform(V, Rotate_Around_Trans(Rotation, MeshCenter));
+        
+        setAttr(VectVarName, "offsetFromOriginAtStart", V)
     #end
 #end
 
@@ -282,7 +300,17 @@
                 
         setAttr(VertVarName, "velocity", PointVelocity)
         SoftMesh_SetPointPos(Name, I, NewPos)        
-    #end
+    #end 
+    //apply torque                    
+    #local C = SoftMesh_GetMeshCenter(Name);
+    #local Torque = getVectAttr(Name, "torque");
+    #local TorqueApplied = Torque * (1/Framerate);
+    #local AngularDrag = getFloatAttr(Name, "angularDrag");
+    #local Torque = Torque * AngularDrag;
+    setAttr(Name, "torque", Torque) 
+    
+    SoftMesh_RotateOriginPoints(Name, TorqueApplied)
+    SoftMesh_RotateMesh(Name, TorqueApplied, C)  
 #end
 
 #macro SoftMesh_PushPoint(Name, PointIndex, Force)                           
@@ -362,6 +390,45 @@
             SoftMesh_SpreadSpreadReduceVelocity(Name, ConnectedPointIndexes[I], By, AlreadyVeled, ReduceBy)
         #end
     #end 
+#end
+
+#macro SoftMesh_SpreadTorque(Name, PointIndex, ContactForce)
+    #local MeshCenter = SoftMesh_GetMeshCenter(Name);
+    #local Length = vlength(PointIndex - MeshCenter);
+     
+    //normalement tu dois projecter par rapport au transform du cube pas au transform du world
+    //mais comme t'as remarqué, YA PAS DE CLASS TRANSFORM DU TOUT ALORS ON FAIT SANS
+    //non mais ho  (TODO)
+    #local TorqueX = SoftMesh_ProjectVectorOntoPlane(ContactForce, <1,0,0>);
+    #local TorqueX = TorqueX * Length;
+    #local TorqueY = SoftMesh_ProjectVectorOntoPlane(ContactForce, <0,1,0>);
+    #local TorqueY = TorqueY * Length;
+    #local TorqueZ = SoftMesh_ProjectVectorOntoPlane(ContactForce, <0,0,1>);
+    #local TorqueZ = TorqueZ * Length;
+    #local Torque = TorqueX + TorqueY + TorqueZ;
+     #debug concat("\ntorque=", vstr(3, Torque, ",", 0,-1)," ContactForce=", vstr(3, ContactForce, ",", 0,-1), " length=", str(Length, 0,-1), "\n")
+    #local Mult = getFloatAttr(Name, "torqueMultiplierOnBounce"); 
+    #local Torque = Torque*Mult;
+    
+    
+    #local CurrentTorque = getVectAttr(Name, "torque");
+    #local Torque = CurrentTorque + Torque;
+    
+    setAttr(Name, "torque", Torque)    
+#end
+
+#macro SoftMesh_ProjectVectorOntoVector(U, V)
+    #local Dot = vdot(U, V);
+    #local VSquared = vlength(V)*vlength(V);
+    #local Factor = Dot/VSquared;
+    #local Return = Factor*V;
+    Return;
+#end       
+
+#macro SoftMesh_ProjectVectorOntoPlane(U, Normal)
+    #local ProjVect = SoftMesh_ProjectVectorOntoVector(U, Normal);
+    #local Return = U - ProjVect;
+    Return;
 #end
 
 //-----------------------------------------------------------------------------------------GET MESH INFOS
