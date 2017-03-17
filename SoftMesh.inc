@@ -19,13 +19,14 @@
      
     DiskArray_CreateDiskArray(VertArrName)
     DiskArray_CreateDiskArray(TriArrName)
-    setAttr(Name, "reformRate", 1)//how fast does it go back to its original form
-    setAttr(Name, "pushMultiplierByStep", 1)//kinda rigidty but different
+    setAttr(Name, "reformRate", 0)//how fast does it go back to its original form
+    setAttr(Name, "pushMultiplierByStep", .7)//kinda rigidty but different
     setAttr(Name, "bouncyness", 0)//how much velocity is conserved when a rigidbody bounces against this surface
     setAttr(Name, "maxDistanceFromBase", 1)//kinda rigidity
     setAttr(Name, "multiplyAdjacentPointVelOnBounce", 0.8)//how good does the material transfert "contact wave" or "push wave" but inverted, the higher, the less wave are tranfered IE the material deforms a lot                                  
     setAttr(Name, "torqueMultiplierOnBounce", 3)//can be higher than 1, this multiplies the torque applied on a bounce (who would have thought right ?)
     setAttr(Name, "angularDrag", 0.01) 
+    setAttr(Name, "triangleShadingEnabled", 0)
      
     setAttr(Name, "torque", <0,0,0>)//torque, not a parameter
     
@@ -231,18 +232,37 @@
 #macro SoftMesh_GetMeshString(Name)
     #local MeshStr = "mesh{"
     #local TriCount = SoftMesh_GetTriangleCount(Name);
+    #local Decls = ""
     //#debug concat("\ntricount=", str(TriCount, 0,0), "\n")
     #for(I, 0, TriCount/3 -1)
-        #local ThisTriangleStr = "triangle{"
+        #local ThisTriangleStr = "\ntriangle{"
         #local TrianglePoints = SoftMesh_GetFaceVerts(Name, I);
         #local P1Str = concat("<", vstr(3, TrianglePoints[0], ",", 0, -1), ">");
         #local P2Str = concat("<", vstr(3, TrianglePoints[1], ",", 0, -1), ">");
         #local P3Str = concat("<", vstr(3, TrianglePoints[2], ",", 0, -1), ">");
-        #local ThisTriangleStr = concat(ThisTriangleStr, P1Str, ",", P2Str, ",", P3Str, "}");
+        #local OutDeclThis = ""
+		#local ThisTriangleShading = SoftMesh_GetShadingForTriangle(Name, I, OutDeclThis)    
+        
+        #local ThisTriangleStr = concat(ThisTriangleStr, P1Str, ",", P2Str, ",", P3Str, " ", ThisTriangleShading, "}");
         #local MeshStr = concat(MeshStr, ThisTriangleStr);
+        #local Decls = concat(Decls, "\n", OutDeclThis);
     #end                                                        
-    #local MeshStr = concat(MeshStr, " pigment{Red}}");
+    #local MeshStr = concat(Decls, "\n", MeshStr, "}");
     MeshStr
+#end
+
+#macro SoftMesh_GetShadingForTriangle(Name, TriangleIndex, OutDecl)
+	#local CanDo = getFloatAttr(Name, "triangleShadingEnabled");
+	#if(CanDo)
+		#local FuncName = concat(Name, "_GetTriangleShading");
+		#local ExecStr = concat("#declare TriangleShade = ", FuncName, "(TriangleIndex, OutDecl)");
+		Parse_String(ExecStr)
+		#local Return = TriangleShade;
+	#else
+		#declare OutDecl = "#declare MRED = texture{pigment{Red}}"
+		#local Return = " texture{MRED}"
+	#end
+	Return
 #end
 
 #macro SoftMesh_GlowPoint(Name, PointIndex)
@@ -302,7 +322,7 @@
         SoftMesh_SetPointPos(Name, I, NewPos)        
     #end 
     //apply torque                    
-    #local C = SoftMesh_GetMeshCenter(Name);
+    /*#local C = SoftMesh_GetMeshCenter(Name);
     #local Torque = getVectAttr(Name, "torque");
     #local TorqueApplied = Torque * (1/Framerate);
     #local AngularDrag = getFloatAttr(Name, "angularDrag");
@@ -310,7 +330,7 @@
     setAttr(Name, "torque", Torque) 
     
     SoftMesh_RotateOriginPoints(Name, TorqueApplied)
-    SoftMesh_RotateMesh(Name, TorqueApplied, C)  
+    SoftMesh_RotateMesh(Name, TorqueApplied, C)*/  
 #end
 
 #macro SoftMesh_PushPoint(Name, PointIndex, Force)                           
