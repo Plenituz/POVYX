@@ -9,16 +9,19 @@
 
 
 //-----------------------------------------------------------------------------------------MESH CREATION AND BASIC MANIPULATION                       
-#macro SoftMesh_CreateSoftMesh(Name, VertexArray, TriangleArray, VertexCount, TriangleCount, Rotation, RotationAnchor)
+#macro SoftMesh_CreateSoftMesh(Name, VertexArray, TriangleArray, Rotation, RotationAnchor)
     //Name.vertex.1, Name.vertex.2 etc
     //Name.triangles.1 Name.triangles.2 etc
     //LEs triangle vont par groupe de 3
     //face number c'est 1 face tous les 3 triangle value   
     #local VertArrName = concat(Name, ".vertex");
-    #local TriArrName = concat(Name, ".triangles");
+    #local TriArrName = concat(Name, ".triangles"); 
+    #local TriangleCount = dimension_size(TriangleArray, 1);
+    #local VertexCount = dimension_size(VertexArray, 1);
      
     DiskArray_CreateDiskArray(VertArrName)
-    DiskArray_CreateDiskArray(TriArrName)
+    DiskArray_CreateDiskArray(TriArrName) 
+    
     setAttr(Name, "reformRate", 0)//how fast does it go back to its original form
     setAttr(Name, "pushMultiplierByStep", .7)//kinda rigidty but different
     setAttr(Name, "bouncyness", 0)//how much velocity is conserved when a rigidbody bounces against this surface
@@ -26,9 +29,11 @@
     setAttr(Name, "multiplyAdjacentPointVelOnBounce", 0.8)//how good does the material transfert "contact wave" or "push wave" but inverted, the higher, the less wave are tranfered IE the material deforms a lot                                  
     setAttr(Name, "torqueMultiplierOnBounce", 3)//can be higher than 1, this multiplies the torque applied on a bounce (who would have thought right ?)
     setAttr(Name, "angularDrag", 0.01) 
-    setAttr(Name, "triangleShadingEnabled", 0)
+    setAttr(Name, "triangleShadingEnabled", 0)                  
+    setAttr(Name, "updateBoxColliderEveryFrameIfCollider", 0)//by default only the rigidbodies will get there boxcollider updated every frame, by putting that to true even if the 
+    //mesh is only a collider the boxcollider will get updated every frame
      
-    setAttr(Name, "torque", <0,0,0>)//torque, not a parameter
+    setAttr(Name, "torque", <0,0,0>)//torque, not a parameter   
     
     #for(I, 0, VertexCount-1)
         DiskArray_Add(VertArrName, VertexArray[I])
@@ -47,7 +52,8 @@
         
         setAttr(VertVarName, "offsetFromOriginAtStart", Offset)
         setAttr(VertVarName, "velocity", <0,0,0>)
-    #end                                     
+    #end 
+    SoftMeshCollision_BuildBoxCollider(Name)                                    
 #end 
 
 #macro SoftMesh_SetBouncyness(Name, Val)
@@ -216,12 +222,16 @@
     SoftMesh_DrawVector(Center, Normal)
 #end
 
-#macro SoftMesh_DrawDebugMesh(Name)
+#macro SoftMesh_DrawDebugMesh(Name, BoxColl)
     SoftMesh_DrawVerts(Name)
     SoftMesh_DrawTriangles(Name)
     //SoftMesh_DrawFaceNormals(Name)
     SoftMesh_DrawMeshCenter(Name)
-    SoftMesh_DrawVertsVelocity(Name)
+    SoftMesh_DrawVertsVelocity(Name)        
+    
+    #if(BoxColl)
+        SoftMeshCollision_DrawBoxCollider(Name, color rgbt <1, .5, 0, 0.9>)
+    #end
 #end
 
 #macro SoftMesh_DrawAsMesh(Name)
@@ -322,7 +332,7 @@
         SoftMesh_SetPointPos(Name, I, NewPos)        
     #end 
     //apply torque                    
-    /*#local C = SoftMesh_GetMeshCenter(Name);
+    #local C = SoftMesh_GetMeshCenter(Name);
     #local Torque = getVectAttr(Name, "torque");
     #local TorqueApplied = Torque * (1/Framerate);
     #local AngularDrag = getFloatAttr(Name, "angularDrag");
@@ -330,7 +340,7 @@
     setAttr(Name, "torque", Torque) 
     
     SoftMesh_RotateOriginPoints(Name, TorqueApplied)
-    SoftMesh_RotateMesh(Name, TorqueApplied, C)*/  
+    SoftMesh_RotateMesh(Name, TorqueApplied, C)  
 #end
 
 #macro SoftMesh_PushPoint(Name, PointIndex, Force)                           
@@ -426,7 +436,8 @@
     #local TorqueZ = SoftMesh_ProjectVectorOntoPlane(ContactForce, <0,0,1>);
     #local TorqueZ = TorqueZ * Length;
     #local Torque = TorqueX + TorqueY + TorqueZ;
-     #debug concat("\ntorque=", vstr(3, Torque, ",", 0,-1)," ContactForce=", vstr(3, ContactForce, ",", 0,-1), " length=", str(Length, 0,-1), "\n")
+    #local Torque = <Torque.z,Torque.x,Torque.y>;
+    #debug concat("\ntorque=", vstr(3, Torque, ",", 0,-1)," ContactForce=", vstr(3, ContactForce, ",", 0,-1), " length=", str(Length, 0,-1), "\n")
     #local Mult = getFloatAttr(Name, "torqueMultiplierOnBounce"); 
     #local Torque = Torque*Mult;
     

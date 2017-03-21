@@ -2,7 +2,8 @@
 #declare SOFTMESHCOLLISION_INC_VAR = 1; 
 
 #include "SoftMesh.inc"
-#include "IO.inc"
+#include "IO.inc"        
+#include "BoxCollider.inc"
 
 //if point inside
 //get face closest to point
@@ -185,6 +186,59 @@
             //TODO BOUNCE
         #end
     #end
+#end
+
+#macro SoftMeshCollision_BuildBoxCollider(Name)
+    #local VertCount = SoftMesh_GetVertCount(Name);
+    #local P1 = SoftMesh_GetPointPos(Name, 0);
+    #local SmallestX = P1.x;
+    #local SmallestY = P1.y;
+    #local SmallestZ = P1.z;
+    #local BiggestX = P1.x;
+    #local BiggestY = P1.y;
+    #local BiggestZ = P1.z;
+    
+    #for(I, 0, VertCount-1)
+        #local CurrentPoint = SoftMesh_GetPointPos(Name, I);
+        #if(CurrentPoint.x < SmallestX)
+            #local SmallestX = CurrentPoint.x;
+        #end                                  
+        #if(CurrentPoint.y < SmallestY)
+            #local SmallestY = CurrentPoint.y;
+        #end                                  
+        #if(CurrentPoint.z < SmallestZ)
+            #local SmallestZ = CurrentPoint.z;
+        #end                                  
+        
+        #if(CurrentPoint.x > BiggestX)
+            #local BiggestX = CurrentPoint.x;
+        #end
+        #if(CurrentPoint.y > BiggestY)
+            #local BiggestY = CurrentPoint.y;
+        #end
+        #if(CurrentPoint.z > BiggestZ)
+            #local BiggestZ = CurrentPoint.z;
+        #end
+    #end 
+    #local P1 = <SmallestX, SmallestY, SmallestZ>;
+    #local P2 = <BiggestX, BiggestY, BiggestZ>;
+    #local CollName = concat(Name, "_BoxCollider");
+    
+    BoxCollider_CreateBoxCollider(CollName, P1, P2)
+    setAttr(Name, "boxCollider", concat("\"", CollName, "\""))
+#end
+
+#macro SoftMeshCollision_DoMeshsBoxCollidersIntersect(Name1, Name2)
+    #local Coll1 = getStrAttr(Name1, "boxCollider")
+    #local Coll2 = getStrAttr(Name2, "boxCollider")
+    
+    #local DoCollide = BoxCollider_IntersectWithOtherBox(Coll1, Coll2);
+    DoCollide;
+#end 
+
+#macro SoftMeshCollision_DrawBoxCollider(Name, Col)
+    #local CollName = getStrAttr(Name, "boxCollider")
+    BoxCollider_Draw(CollName, Col)
 #end
 
 #end// end SoftMeshCollision.inc

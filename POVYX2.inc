@@ -74,11 +74,28 @@
 #macro POVYX2_ApplyCollision(ColliderName)
     #local SoftBodyCount = DiskArray_GetCount("POVYX2.softBodies");
     #for(I, 0, SoftBodyCount-1)
-        #local SoftMeshName = DiskArray_GetStr("POVYX2.softBodies", I)
-        #if(SoftMeshName != ColliderName)
-            //collider
-            #debug concat("\napplying collide on ", ColliderName, " (collider) with ", SoftMeshName, " (softbody)\n")
-            SoftMeshCollision_CollideWith(SoftMeshName, ColliderName)
+        #local SoftMeshName = DiskArray_GetStr("POVYX2.softBodies", I) 
+        
+           
+        
+        #if(SoftMeshName != ColliderName)     
+            #local UpdateThisCollider = getFloatAttr(ColliderName, "updateBoxColliderEveryFrameIfCollider");
+            //update the simplified box collider                                                            
+            #if(UpdateThisCollider)
+                SoftMeshCollision_BuildBoxCollider(ColliderName)
+            #end
+            SoftMeshCollision_BuildBoxCollider(SoftMeshName) 
+            //check if the meshs might collide with the box colliders first
+            #local MightCollide = SoftMeshCollision_DoMeshsBoxCollidersIntersect(SoftMeshName, ColliderName);
+            #if(MightCollide)
+                #debug concat("\napplying collide on ", ColliderName, " (collider) with ", SoftMeshName, " (softbody)\n")
+                SoftMeshCollision_CollideWith(SoftMeshName, ColliderName)
+            #else
+                #debug concat("\nno box collision in between ", ColliderName, " (collider) and ", SoftMeshName, " (softbody)\n" )
+            #end
+            
+            
+            
         #end
     #end
 #end

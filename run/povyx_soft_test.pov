@@ -2,7 +2,8 @@
 #include "colors.inc"
 #include "POVYX2.inc"
 #include "SoftMeshCollision.inc" 
-#include "SphereMesh.inc"
+  
+#include "BoxCollider.inc"
 
 /*SoftMesh_CreateSoftMesh("mSoftMesh", 
 array[6]{
@@ -48,7 +49,6 @@ array[6]{
     }
 #end
 
-
 //DrawAxis()
 
 #macro mSoftMesh_GetTriangleShading(TriangleIndex, OutDecl)
@@ -58,14 +58,7 @@ array[6]{
 	#declare OutDecl = concat("#declare MA_TEXT_", str(TriangleIndex, 0, 0), " = texture { pigment { color rgb<", Val, ", ", Val, ", ", Val, "> } }");	
 	#local R = concat(" texture{MA_TEXT_", str(TriangleIndex, 0, 0),"}");
 	R;
-#end
-
-
-#if(clock = 0)
-    SoftMesh_CreateSoftMesh("mSoftMesh", VertexList, TriangleList, 47, 282, <0,0,0>, 0)
-	setAttr("mSoftMesh", "triangleShadingEnabled", 1)   
-     
-     
+#end   
      #declare CubeSize = 1;
 #declare VertexList = array[8]{
     <-CubeSize, -CubeSize, -CubeSize>,
@@ -91,11 +84,21 @@ array[6]{
     4, 5, 6, //   6: face avant
     4, 6, 7
 }; 
+//#include "SphereMesh.inc" 
+
+
+#if(clock = 0)
+    SoftMesh_CreateSoftMesh("mSoftMesh", VertexList, TriangleList, <0,0,0>, 0)
+	setAttr("mSoftMesh", "triangleShadingEnabled", 0)   
+    
+ 
          
-    SoftMesh_CreateSoftMesh("mSoftMeshCollider", VertexList, TriangleList, 8, 36, <0,0,0>, 0)
-	SoftMesh_ScaleMesh("mSoftMeshCollider", <10,10,10>, 0)    
-    SoftMesh_MoveMeshUniformly("mSoftMeshCollider", <0,-13,0>)
-    SoftMesh_SetBouncyness("mSoftMeshCollider", 0)  
+    SoftMesh_CreateSoftMesh("mSoftMeshCollider", VertexList, TriangleList, <0,0,0>, 0)
+	SoftMesh_ScaleMesh("mSoftMeshCollider", <2,2,2>, 0)    
+    SoftMesh_MoveMeshUniformly("mSoftMeshCollider", <2.5,-5,0>)
+    SoftMesh_SetBouncyness("mSoftMeshCollider", 0)     
+    //setAttr("mSoftMeshCollider", "updateBoxColliderEveryFrameIfCollider", 1)
+    SoftMeshCollision_BuildBoxCollider("mSoftMeshCollider")  
     
     POVYX2_Init()
     POVYX2_AddSoftBody("mSoftMesh") 
@@ -105,18 +108,20 @@ array[6]{
     POVYX2_ResetCacheRead()
 #end             
 //box{-1, 1 pigment{Grey} rotate <0,0,0> scale 10 translate <0, -13, 0>}
-//SoftMesh_DrawDebugMesh("mSoftMeshCollider")
+//SoftMesh_DrawDebugMesh("mSoftMeshCollider")   
+
 
 #if(0)
-    SoftMesh_DrawDebugMesh("mSoftMesh")
-    //SoftMesh_DrawAsMesh("mSoftMesh") 
     
-    POVYX2_Update() 
+    //SoftMesh_DrawAsMesh("mSoftMesh") 
+    SoftMesh_DrawDebugMesh("mSoftMesh", 1)
+    POVYX2_Update()
+     
 #else
-    //POVYX2_CacheSimulation(27)
+    //POVYX2_CacheSimulation(48)
     POVYX2_ReadNextCachedFrame("POVYX2Cache.inc")
 #end
-SoftMesh_DrawAsMesh("mSoftMeshCollider")
+SoftMesh_DrawDebugMesh("mSoftMeshCollider", 0)
 
 
 
@@ -127,7 +132,7 @@ light_source{ <0,10,-10> White }
 camera{ 
     right x*image_width / image_height
     up y
-    location <0, 3, -10> 
+    location <0, 0, -10> 
     look_at < 0,-3,0 > 
     angle 80
 }
