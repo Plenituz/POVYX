@@ -15,7 +15,7 @@
     setAttr("POVYX2", "airDrag", Val)
 #end
 
-#macro POVYX2_SetFramerate(Val)
+#macro POVYX2_SetFramerate(Val)     
     setAttr("POVYX2", "framerate", Val)
 #end
 

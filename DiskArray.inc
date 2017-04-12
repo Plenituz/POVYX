@@ -4,7 +4,9 @@
 #include "IO.inc"
 
 
-/*
+/*  
+    This is an ordered list but it creates one file per object 
+
   You can store without specifying type, therefore
   you can have an array with different types inside 
   each index.
