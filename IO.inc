@@ -23,6 +23,18 @@
 	#read (mFile, Result)
 	#fclose mFile
 	Result;
+#end 
+
+#macro ReadEntireFile(StrFilePath)
+    #fopen mFile StrFilePath read
+    #local Result = "";
+    #while(defined(mFile))
+        #local Chunk = ""             
+        #read(mFile, Chunk) 
+        #local Result = concat(Result, Chunk)
+    #end
+    #fclose mFile                            
+    Result;
 #end
 
 #macro ReadVar(StrFilePath)
